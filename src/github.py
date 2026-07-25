@@ -1,5 +1,5 @@
 import requests
-from src.config import GITHUB_TOKEN, SEARCH_TAGS
+from src.config import PAT_TOKEN, SEARCH_TAGS
 import urllib.parse
 
 class GitHubManager:
@@ -7,8 +7,8 @@ class GitHubManager:
         self.headers = {
             "Accept": "application/vnd.github.v3+json",
         }
-        if GITHUB_TOKEN:
-            self.headers["Authorization"] = f"token {GITHUB_TOKEN}"
+        if PAT_TOKEN:
+            self.headers["Authorization"] = f"token {PAT_TOKEN}"
 
     def search_issues(self, existing_urls):
         found_issues = []

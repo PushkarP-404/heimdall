@@ -1,7 +1,7 @@
 import os
 import requests
 import google.generativeai as genai
-from src.config import GITHUB_TOKEN, GEMINI_API_KEY
+from src.config import PAT_TOKEN, GEMINI_API_KEY
 from src.sheets import GoogleSheetsManager
 
 ISSUE_URL = os.getenv("ISSUE_URL")
@@ -25,7 +25,7 @@ def main():
     api_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}"
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"token {GITHUB_TOKEN}"
+        "Authorization": f"token {PAT_TOKEN}"
     }
 
     response = requests.get(api_url, headers=headers)

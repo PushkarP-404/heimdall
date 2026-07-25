@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # GitHub Configuration
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+PAT_TOKEN = os.getenv("PAT_TOKEN")
 
 # Google Sheets Configuration
 GOOGLE_SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "service_account.json")

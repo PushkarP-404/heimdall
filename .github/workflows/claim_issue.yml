@@ -31,7 +31,7 @@ jobs:
 
       - name: Run Claim Script
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_URL: ${{ github.event.inputs.issue_url }}
