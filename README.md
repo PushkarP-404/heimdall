@@ -1,4 +1,4 @@
-# Heimdall Issue Finder 
+# Heimdall Issue Finder 👁️‍🗨️
 
 Heimdall is an autonomous AI agent that runs on a schedule to discover, filter, and track high-quality open source issues on GitHub.
 
