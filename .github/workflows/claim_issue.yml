@@ -1,0 +1,38 @@
+name: Manual Issue Claim
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_url:
+        description: 'GitHub Issue URL to claim'
+        required: true
+        type: string
+
+jobs:
+  claim:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create Google Service Account JSON
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > service_account.json
+
+      - name: Run Claim Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ISSUE_URL: ${{ github.event.inputs.issue_url }}
+        run: python -m src.claim
