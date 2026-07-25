@@ -14,7 +14,7 @@ Heimdall is an autonomous AI agent that runs on a schedule to discover, filter, 
 ## Community
 
 We track and route these issues dynamically. 
-👉 **[Join our Discord Channel Here ([(https://discord.gg/TfpjARhMn)](#)**
+👉 **[Join our Discord Channel Here (https://discord.gg/TfpjARhMn)](#)**
 
 ## Setup & Deployment
 
