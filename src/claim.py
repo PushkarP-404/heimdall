@@ -1,27 +1,25 @@
 import os
 import requests
-import google.generativeai as genai
+from google import genai
 from src.config import PAT_TOKEN, GEMINI_API_KEY
 from src.sheets import GoogleSheetsManager
 
 ISSUE_URL = os.getenv("ISSUE_URL")
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-pro')
-else:
-    model = None
-
 def main():
     if not ISSUE_URL:
-        print("No ISSUE_URL provided.")
+        print("Error: ISSUE_URL is not set.")
         return
-
-    print(f"Attempting to claim issue: {ISSUE_URL}")
+        
+    print(f"Starting manual claim workflow for: {ISSUE_URL}")
     
-    parts = ISSUE_URL.split('/')
-    owner, repo, issue_number = parts[-4], parts[-3], parts[-1]
-    
+    # Parse URL
+    parts = ISSUE_URL.replace("https://github.com/", "").split("/")
+    if len(parts) < 4:
+        print("Error: Invalid GitHub Issue URL.")
+        return
+        
+    owner, repo, _, issue_number = parts[:4]
     api_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}"
     headers = {
         "Accept": "application/vnd.github.v3+json",
@@ -30,50 +28,53 @@ def main():
 
     response = requests.get(api_url, headers=headers)
     if response.status_code != 200:
-        print("Failed to fetch issue details.")
+        print(f"Error fetching issue details: {response.status_code}")
         return
         
     issue_data = response.json()
     
-    if model:
-        prompt = f"""
-        You are an experienced, polite software engineer attempting to claim an open source issue on GitHub.
-        Write a concise, professional comment asking to be assigned to this issue.
-        Do NOT write a generic bot-like response. Keep it strictly to 1-2 sentences. 
-        Example: "Hi, I'd love to take a look at this if no one else is working on it!"
+    # Draft comment with Gemini
+    if not GEMINI_API_KEY:
+        print("Error: GEMINI_API_KEY not found.")
+        return
         
-        Issue Title: {issue_data['title']}
-        Issue Body: {str(issue_data.get('body'))[:1000]}
-        """
-        try:
-            comment_body = model.generate_content(prompt).text.strip()
-        except Exception:
-            comment_body = "Hi, I'd like to take this on! Please let me know if there's any specific context I should be aware of."
-    else:
-        comment_body = "Hi, I'd like to take this on! Please let me know if there's any specific context I should be aware of."
-
-    print(f"Drafted Comment: {comment_body}")
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    prompt = f"""
+    You are an open source contributor. You want to claim this issue.
+    Draft a short, polite comment (1-2 sentences) asking to be assigned.
+    Do not be overly formal. Just ask if you can take a look or work on it.
+    Issue Title: {issue_data['title']}
+    Issue Body: {str(issue_data.get('body', ''))[:1000]}
+    """
     
-    # Post the comment
-    comment_url = f"{api_url}/comments"
-    post_resp = requests.post(comment_url, headers=headers, json={"body": comment_body})
+    try:
+        print("Drafting comment with Gemini...")
+        llm_response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        comment_text = llm_response.text.strip()
+    except Exception as e:
+        print(f"Error generating comment: {e}")
+        return
+        
+    print(f"\nDrafted Comment:\n{comment_text}\n")
+    
+    # Post comment
+    print("Posting comment to GitHub...")
+    comment_url = issue_data['comments_url']
+    post_resp = requests.post(comment_url, headers=headers, json={"body": comment_text})
     
     if post_resp.status_code == 201:
-        print("Successfully posted claim comment!")
+        print("Successfully posted comment!")
         
-        # Update Google Sheets status
-        try:
-            sheets_manager = GoogleSheetsManager()
-            if sheets_manager.sheet:
-                cell = sheets_manager.sheet.find(ISSUE_URL)
-                if cell:
-                    sheets_manager.sheet.update_cell(cell.row, 6, "Claimed")
-                    print("Updated Google Sheet status to 'Claimed'.")
-        except Exception as e:
-            print(f"Failed to update Google Sheet: {e}")
-            
+        # Update Google Sheet
+        print("Updating Google Sheet status to 'Claimed'...")
+        sheets_manager = GoogleSheetsManager()
+        sheets_manager.update_issue_status(ISSUE_URL, "Claimed")
+        print("Done!")
     else:
-        print(f"Failed to post comment: {post_resp.status_code} - {post_resp.text}")
+        print(f"Failed to post comment: {post_resp.text}")
 
 if __name__ == "__main__":
     main()

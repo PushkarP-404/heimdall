@@ -30,4 +30,8 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL_HIGH_PRIORITY: ${{ secrets.DISCORD_WEBHOOK_URL_HIGH_PRIORITY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: python -m src.main

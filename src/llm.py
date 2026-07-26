@@ -1,13 +1,12 @@
-import google.generativeai as genai
+from google import genai
 from src.config import GEMINI_API_KEY
 import requests
 import base64
 
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-pro')
+    client = genai.Client(api_key=GEMINI_API_KEY)
 else:
-    model = None
+    client = None
 
 class LLMAnalyzer:
     def __init__(self, github_headers):
@@ -28,7 +27,7 @@ class LLMAnalyzer:
             return self.repo_cache[repo_api_url]
 
         default_result = {"is_welcoming": True, "is_gsoc": False}
-        if not model:
+        if not client:
             return default_result
 
         readme = self._fetch_file_content(repo_api_url, "README.md")
@@ -52,7 +51,10 @@ class LLMAnalyzer:
         """
         try:
             print(f"  [LLM] Analyzing repository: {repo_api_url.split('repos/')[-1]}...")
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
             lines = [line.strip().upper() for line in response.text.strip().split('\n') if line.strip()]
             
             is_welcoming = "YES" in lines[0] if len(lines) > 0 else True
@@ -68,7 +70,7 @@ class LLMAnalyzer:
 
     def analyze_issue(self, issue_title, issue_body):
         default_result = {"is_actionable": True, "effort": "LOW"}
-        if not model:
+        if not client:
             return default_result
 
         prompt = f"""
@@ -85,7 +87,10 @@ class LLMAnalyzer:
         """
         try:
             print(f"  [LLM] Analyzing issue viability: '{issue_title[:30]}...'")
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
             lines = [line.strip().upper() for line in response.text.strip().split('\n') if line.strip()]
             
             is_actionable = "YES" in lines[0] if len(lines) > 0 else True
