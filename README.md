@@ -10,6 +10,7 @@ Heimdall is an autonomous AI agent that runs on a schedule to discover, filter, 
 - **Google Sheets Integration**: Logs discovered issues to a Google Sheet to prevent duplicates and track status.
 - **Discord Alerts**: Sends rich, color-coded alerts to Discord when matches are found.
 - **Manual Claiming Workflow**: Trigger a GitHub Action to let the LLM draft and politely post a professional, context-aware claim comment on the issue.
+- **IssueHunt Web Scraper**: Runs a headless Chromium browser to scrape open bounties from IssueHunt's dynamic website and sends them directly to a dedicated Discord channel using Gemini 3.5 Flash.
 
 ## Community
 
@@ -29,4 +30,6 @@ Heimdall runs entirely for free using GitHub Actions and requires zero maintenan
    - `GEMINI_API_KEY`: Your Gemini AI API Key.
    - `DISCORD_WEBHOOK_URL`: Your primary Discord webhook URL.
    - `DISCORD_WEBHOOK_URL_HIGH_PRIORITY`: Your secondary Discord webhook URL for priority alerts.
-4. The Heimdall cron job will automatically begin running every hour!
+   - `DISCORD_WEBHOOK_URL_ISSUEHUNT`: Your third Discord webhook URL for IssueHunt bounties.
+   - `ISSUEHUNT_SESSION_TOKEN`: (Optional) Your exported browser cookies in JSON format to log into IssueHunt.
+4. The Heimdall cron jobs will automatically begin running every hour!
