@@ -4,10 +4,10 @@ import time
 import requests
 from google import genai
 from playwright.sync_api import sync_playwright
+from src.config import GEMINI_API_KEY, DISCORD_WEBHOOK_URL_ISSUEHUNT, ISSUEHUNT_SESSION_TOKEN
 
-DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK_URL_ISSUEHUNT")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-SESSION_TOKEN = os.getenv("ISSUEHUNT_SESSION_TOKEN")
+DISCORD_WEBHOOK = DISCORD_WEBHOOK_URL_ISSUEHUNT
+SESSION_TOKEN = ISSUEHUNT_SESSION_TOKEN
 
 def send_discord_notification(bounty):
     if not DISCORD_WEBHOOK:
@@ -42,7 +42,7 @@ def scrape_bounties():
                 print("Warning: ISSUEHUNT_SESSION_TOKEN is not valid JSON. Ignoring.")
                 
         page = context.new_page()
-        page.goto("https://issuehunt.io", wait_until="networkidle")
+        page.goto("https://issuehunt.io/issues", wait_until="networkidle")
         
         # Wait a few seconds for any CSR (Client-Side Rendering) to finish
         page.wait_for_timeout(5000)
@@ -79,7 +79,7 @@ def scrape_bounties():
     
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.5-flash',
             contents=prompt
         )
         

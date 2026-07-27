@@ -52,7 +52,7 @@ class LLMAnalyzer:
         try:
             print(f"  [LLM] Analyzing repository: {repo_api_url.split('repos/')[-1]}...")
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.5-flash',
                 contents=prompt
             )
             lines = [line.strip().upper() for line in response.text.strip().split('\n') if line.strip()]
@@ -88,7 +88,7 @@ class LLMAnalyzer:
         try:
             print(f"  [LLM] Analyzing issue viability: '{issue_title[:30]}...'")
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.5-flash',
                 contents=prompt
             )
             lines = [line.strip().upper() for line in response.text.strip().split('\n') if line.strip()]

@@ -50,7 +50,7 @@ def main():
     try:
         print("Drafting comment with Gemini...")
         llm_response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.5-flash',
             contents=prompt
         )
         comment_text = llm_response.text.strip()
