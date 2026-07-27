@@ -15,6 +15,10 @@ GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 DISCORD_WEBHOOK_URL_HIGH_PRIORITY = os.getenv("DISCORD_WEBHOOK_URL_HIGH_PRIORITY")
+DISCORD_WEBHOOK_URL_ISSUEHUNT = os.getenv("DISCORD_WEBHOOK_URL_ISSUEHUNT")
+
+# IssueHunt Web Scraping
+ISSUEHUNT_SESSION_TOKEN = os.getenv("ISSUEHUNT_SESSION_TOKEN")
 
 # Search Parameters
 SEARCH_TAGS = ["good first issue", "help wanted", "bug", "enhancement", "improvement"]
