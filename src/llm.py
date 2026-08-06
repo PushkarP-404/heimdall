@@ -26,7 +26,7 @@ class LLMAnalyzer:
         if repo_api_url in self.repo_cache:
             return self.repo_cache[repo_api_url]
 
-        default_result = {"is_welcoming": True, "is_gsoc": False}
+        default_result = {"is_welcoming": True}
         if not client:
             return default_result
 
@@ -36,12 +36,11 @@ class LLMAnalyzer:
         prompt = f"""
         You are an AI agent helping a developer find open source repositories.
         Read the provided README and CONTRIBUTING files.
-        Task 1: Determine if this repository actively welcomes external contributors. If it's deprecated or internal-only, NO. Otherwise, YES.
-        Task 2: Determine if this organization/repository participates in Google Summer of Code (GSoC). Look for keywords like "GSoC" or "Google Summer of Code". Answer GSOC if yes, NONE if no.
+        Determine if this repository actively welcomes external contributors.
+        If it's deprecated, archived, or internal-only, answer NO. Otherwise, YES.
         
-        Format your response EXACTLY like this (2 lines):
-        Line 1: YES or NO
-        Line 2: GSOC or NONE
+        Format your response EXACTLY as a single line:
+        YES or NO
 
         README excerpt:
         {readme[:3000]}
@@ -58,9 +57,8 @@ class LLMAnalyzer:
             lines = [line.strip().upper() for line in response.text.strip().split('\n') if line.strip()]
             
             is_welcoming = "YES" in lines[0] if len(lines) > 0 else True
-            is_gsoc = "GSOC" in lines[1] if len(lines) > 1 else False
             
-            result = {"is_welcoming": is_welcoming, "is_gsoc": is_gsoc}
+            result = {"is_welcoming": is_welcoming}
         except Exception as e:
             print(f"  [LLM] Repo Error: {e}")
             result = default_result

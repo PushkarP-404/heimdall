@@ -2,6 +2,7 @@ from src.sheets import GoogleSheetsManager
 from src.github import GitHubManager
 from src.llm import LLMAnalyzer
 from src.discord import DiscordNotifier
+from src.gsoc import get_gsoc_github_orgs, is_gsoc_org
 
 def main():
     print("Starting Heimdall Issue Finder Agent (Phase 4)...")
@@ -12,11 +13,14 @@ def main():
     llm_analyzer = LLMAnalyzer(github_manager.headers)
     discord_notifier = DiscordNotifier()
 
-    # Step 1: Get existing issues to prevent duplicates
+    # Step 1: Pre-load the verified GSoC org list (fetched once, cached in-process)
+    get_gsoc_github_orgs()
+
+    # Step 2: Get existing issues to prevent duplicates
     existing_urls = sheets_manager.get_existing_issue_urls()
     print(f"Found {len(existing_urls)} existing issues in the Google Sheet.")
 
-    # Step 2: Search GitHub for new issues
+    # Step 3: Search GitHub for new issues
     raw_new_issues = github_manager.search_issues(existing_urls)
     
     if not raw_new_issues:
@@ -25,40 +29,45 @@ def main():
 
     print(f"Discovered {len(raw_new_issues)} new raw issues. Passing to LLM for intelligence filtering...")
     
-    # Step 3: Filter with LLM and Priority Checks
+    # Step 4: Filter with LLM and Priority Checks
     filtered_issues = []
     for issue in raw_new_issues:
         repo_url = issue['repository_url']
-        
-        # Check 1: Repo Analysis (Welcoming + GSoC)
+
+        # Check 1: Verified GSoC org lookup (deterministic — no LLM needed)
+        is_gsoc = is_gsoc_org(repo_url)
+
+        # Check 2: Repo Analysis (Welcoming)
         repo_analysis = llm_analyzer.analyze_repo(repo_url)
         if not repo_analysis["is_welcoming"]:
             print(f"  [Skip] Repo not welcoming: {issue['html_url']}")
             continue
-            
-        # Check 2: Issue Analysis (Actionable + Effort)
+
+        # Check 3: Issue Analysis (Actionable + Effort)
         issue_analysis = llm_analyzer.analyze_issue(issue['title'], issue.get('body', ''))
         if not issue_analysis["is_actionable"]:
             print(f"  [Skip] Issue not actionable: {issue['html_url']}")
             continue
-            
-        # Check 3: Stars (Optional, for priority)
+
+        # Check 4: Stars (for priority signal)
         repo_details = github_manager.get_repo_details(repo_url)
         stars = repo_details.get("stargazers_count", 0)
-        
+
         # Determine Priority
-        # We consider it high priority if it has lots of stars (> 500) or requires high effort
-        is_high_priority = (stars >= 500) or (issue_analysis["effort"] == "HIGH")
-        is_gsoc = repo_analysis["is_gsoc"]
-        
+        # High priority = (many stars OR high effort) AND confirmed GSoC org.
+        # This ensures the high-priority channel only gets real GSoC org issues.
+        meets_priority_signal = (stars >= 500) or (issue_analysis["effort"] == "HIGH")
+        is_high_priority = meets_priority_signal and is_gsoc
+
         issue["_is_high_priority"] = is_high_priority
         issue["_is_gsoc"] = is_gsoc
 
         # Passed all checks!
-        print(f"  [Keep] High quality issue found: {issue['html_url']} (Priority: {is_high_priority}, GSoC: {is_gsoc})")
+        print(f"  [Keep] High quality issue found: {issue['html_url']} (Priority: {is_high_priority}, GSoC: {is_gsoc}, Stars: {stars})")
         filtered_issues.append(issue)
 
     if filtered_issues:
+
         print(f"\nAfter LLM filtering, {len(filtered_issues)} high-quality issues remain.")
         # Step 4: Append to Google Sheets
         sheets_manager.append_issues(filtered_issues)
