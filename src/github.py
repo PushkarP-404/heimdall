@@ -1,3 +1,4 @@
+import time
 import requests
 from src.config import PAT_TOKEN, SEARCH_TAGS
 import urllib.parse
@@ -40,7 +41,6 @@ class GitHubManager:
                 print(f"Failed to search for tag {tag}: {response.status_code} - {response.text}")
 
             # Sleep for 5 seconds to avoid GitHub Search API secondary rate limits
-            import time
             time.sleep(5)
 
         return found_issues

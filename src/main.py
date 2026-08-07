@@ -1,3 +1,4 @@
+import time
 from src.sheets import GoogleSheetsManager
 from src.github import GitHubManager
 from src.llm import LLMAnalyzer
@@ -76,12 +77,11 @@ def main():
         print("Sending Discord notifications...")
         for issue in filtered_issues:
             discord_notifier.send_notification(
-                issue, 
+                issue,
                 is_high_priority=issue.get("_is_high_priority", False),
                 is_gsoc=issue.get("_is_gsoc", False)
             )
-            import time
-            time.sleep(1) # Prevent Discord rate limits
+            time.sleep(1)  # Prevent Discord rate limits
     else:
         print("No issues passed the LLM filter.")
 
