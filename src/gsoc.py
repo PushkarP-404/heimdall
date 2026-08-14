@@ -1,3 +1,5 @@
+import json
+import re
 import requests
 
 GSOC_API_URL = "https://api.gsocorganizations.dev/organizations.json"
@@ -40,11 +42,13 @@ def get_gsoc_github_orgs() -> set[str]:
         return _gsoc_org_names
 
     names: set[str] = set()
-    for org in orgs:
-        # Primary: check the org's own URL field for a GitHub URL
-        github_org = _extract_github_org(org.get("url", ""))
-        if github_org:
-            names.add(github_org)
+    
+    # Dump the entire response to a string to easily find all github.com URLs
+    # This catches orgs that put their GitHub URL in ideas_url, guide_url, or student project code_urls
+    orgs_str = json.dumps(orgs)
+    pattern = re.compile(r'github\.com/([a-zA-Z0-9-]+)')
+    for match in pattern.finditer(orgs_str):
+        names.add(match.group(1).lower())
 
     _gsoc_org_names = names
     print(f"  [GSoC] Loaded {len(names)} GSoC GitHub orgs.")
