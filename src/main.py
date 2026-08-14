@@ -55,10 +55,10 @@ def main():
         stars = repo_details.get("stargazers_count", 0)
 
         # Determine Priority
-        # High priority = (many stars OR high effort) AND confirmed GSoC org.
-        # This ensures the high-priority channel only gets real GSoC org issues.
-        meets_priority_signal = (stars >= 500) or (issue_analysis["effort"] == "HIGH")
-        is_high_priority = meets_priority_signal and is_gsoc
+        # High priority = is a GSoC org OR repo is very popular (>= 1000 stars).
+        # Using OR instead of AND so either signal alone is enough.
+        # Effort == "HIGH" is intentionally excluded — high effort = hard for newcomers.
+        is_high_priority = is_gsoc or (stars >= 1000)
 
         issue["_is_high_priority"] = is_high_priority
         issue["_is_gsoc"] = is_gsoc

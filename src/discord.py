@@ -3,9 +3,17 @@ from src.config import DISCORD_WEBHOOK_URL, DISCORD_WEBHOOK_URL_HIGH_PRIORITY
 
 class DiscordNotifier:
     def send_notification(self, issue, is_high_priority=False, is_gsoc=False):
-        webhook_url = DISCORD_WEBHOOK_URL_HIGH_PRIORITY if is_high_priority else DISCORD_WEBHOOK_URL
-        if not webhook_url:
-            print("Webhook URL missing, skipping notification.")
+        if is_high_priority and DISCORD_WEBHOOK_URL_HIGH_PRIORITY:
+            webhook_url = DISCORD_WEBHOOK_URL_HIGH_PRIORITY
+            print(f"  [Discord] Routing to HIGH PRIORITY channel: {issue['html_url']}")
+        elif DISCORD_WEBHOOK_URL:
+            webhook_url = DISCORD_WEBHOOK_URL
+            if is_high_priority:
+                print(f"  [Discord] WARNING: HP webhook not set — falling back to normal channel for: {issue['html_url']}")
+            else:
+                print(f"  [Discord] Routing to normal channel: {issue['html_url']}")
+        else:
+            print("  [Discord] No webhook URLs configured, skipping notification.")
             return
             
         labels = ", ".join([l['name'] for l in issue.get('labels', [])])
