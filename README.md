@@ -10,7 +10,7 @@ Heimdall is an autonomous AI agent that runs on a schedule to discover, filter, 
 - **Google Sheets Integration**: Logs discovered issues to a Google Sheet to prevent duplicates and track status.
 - **Discord Alerts**: Sends rich, color-coded alerts to Discord when matches are found.
 - **Manual Claiming Workflow**: Trigger a GitHub Action to let the LLM draft and politely post a professional, context-aware claim comment on the issue.
-- **IssueHunt Web Scraper**: Runs a headless Chromium browser to scrape open bounties from IssueHunt's dynamic website and sends them directly to a dedicated Discord channel using Gemini LLM
+- **IssueHunt Web Scraper**: Runs a headless Chromium browser to scrape open bounties from IssueHunt's dynamic website and sends them directly to a dedicated Discord channel using Gemini's LLM.
 
 ## Community
 
