@@ -20,7 +20,6 @@ We track and route these issues dynamically.
 ## Setup & Deployment
 
 Heimdall runs entirely for free using GitHub Actions and requires zero maintenance. To deploy your own instance:
-
 1. Fork or clone this repository.
 2. Go to your repository **Settings** -> **Secrets and variables** -> **Actions**.
 3. Add the following Repository Secrets:
