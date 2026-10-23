@@ -1,7 +1,7 @@
 import os
 import requests
 from google import genai
-from src.config import PAT_TOKEN, GEMINI_API_KEY
+from src.config import PAT_TOKEN, GEMINI_API_KEY, GEMINI_MODEL
 from src.sheets import GoogleSheetsManager
 
 ISSUE_URL = os.getenv("ISSUE_URL")
@@ -50,7 +50,7 @@ def main():
     try:
         print("Drafting comment with Gemini...")
         llm_response = client.models.generate_content(
-            model='gemini-3.5-flash',
+            model=GEMINI_MODEL,
             contents=prompt
         )
         comment_text = llm_response.text.strip()

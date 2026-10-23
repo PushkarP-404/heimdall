@@ -3,7 +3,12 @@ import time
 import requests
 from google import genai
 from playwright.sync_api import sync_playwright
-from src.config import GEMINI_API_KEY, DISCORD_WEBHOOK_URL_ISSUEHUNT, ISSUEHUNT_SESSION_TOKEN
+from src.config import (
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    DISCORD_WEBHOOK_URL_ISSUEHUNT,
+    ISSUEHUNT_SESSION_TOKEN,
+)
 from src.sheets import GoogleSheetsManager
 
 DISCORD_WEBHOOK = DISCORD_WEBHOOK_URL_ISSUEHUNT
@@ -62,9 +67,16 @@ def scrape_bounties():
             })).filter(a => a.url && a.text);
         }""")
 
+        # Pre-filter links to discard generic navigation
+        ignored_patterns = {"/login", "/signup", "/terms", "/privacy", "/pricing", "/about", "/contact"}
+        filtered_links = [
+            item for item in links_data
+            if not any(item["url"].lower().endswith(pat) for pat in ignored_patterns)
+            and len(item["text"]) > 2
+        ]
         browser.close()
 
-    print(f"Extracted {len(links_data)} links from the page. Sending to LLM for parsing...")
+    print(f"Extracted {len(filtered_links)} candidate links from the page. Sending to LLM for parsing...")
 
     if not GEMINI_API_KEY:
         print("GEMINI_API_KEY missing. Cannot parse bounties.")
@@ -73,20 +85,20 @@ def scrape_bounties():
     client = genai.Client(api_key=GEMINI_API_KEY)
 
     prompt = f"""
-    You are an AI data extractor. I scraped all the links from IssueHunt.io.
-    Your job is to identify the open bounties or issues from this list.
+    You are an AI data extractor. I scraped candidate links from IssueHunt.io.
+    Identify the open bounties or issues from this list.
     Return ONLY a raw JSON array of objects (no markdown blocks, no backticks).
     Each object must have exactly 3 keys: "title", "url", "amount".
     If no amount is found, use "Check Link".
     Ignore generic links like "Log in", "Home", "Terms", etc.
     
     Links data:
-    {json.dumps(links_data)[:30000]}
+    {json.dumps(filtered_links)[:30000]}
     """
 
     try:
         response = client.models.generate_content(
-            model="gemini-3.5-flash",
+            model=GEMINI_MODEL,
             contents=prompt,
         )
 

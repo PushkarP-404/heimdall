@@ -2,6 +2,20 @@ import gspread
 from datetime import datetime, timezone
 from src.config import GOOGLE_SERVICE_ACCOUNT_FILE, GOOGLE_SHEET_ID
 
+MAIN_SHEET_HEADERS = [
+    "Repository",
+    "Issue URL",
+    "Title",
+    "Labels",
+    "Date Found",
+    "Status",
+    "Stars",
+    "Language",
+    "Difficulty",
+    "Effort",
+    "AI Summary",
+]
+
 
 class GoogleSheetsManager:
     def __init__(self):
@@ -12,10 +26,7 @@ class GoogleSheetsManager:
             self.gc = gspread.service_account(filename=GOOGLE_SERVICE_ACCOUNT_FILE)
             spreadsheet = self.gc.open_by_key(GOOGLE_SHEET_ID)
             self.sheet = spreadsheet.sheet1
-            self._ensure_headers(
-                self.sheet,
-                ["Repository", "Issue URL", "Title", "Labels", "Date Found", "Status"],
-            )
+            self._ensure_and_migrate_headers(self.sheet, MAIN_SHEET_HEADERS)
             self.issuehunt_sheet = self._get_or_create_worksheet(
                 spreadsheet,
                 "IssueHunt",
@@ -28,10 +39,23 @@ class GoogleSheetsManager:
     # Internal helpers
     # -------------------------------------------------------------------------
 
-    def _ensure_headers(self, sheet, headers):
-        """Add a header row to *sheet* if it is completely empty."""
-        if not sheet.row_values(1):
-            sheet.append_row(headers)
+    def _ensure_and_migrate_headers(self, sheet, target_headers):
+        """
+        Safely ensure target headers exist. If the sheet already has existing
+        legacy headers (e.g. 6 columns), append new column headers starting at col 7
+        without altering the order of columns 1-6.
+        """
+        try:
+            current_headers = sheet.row_values(1)
+            if not current_headers:
+                sheet.append_row(target_headers)
+            elif len(current_headers) < len(target_headers):
+                # Update row 1 with expanded headers
+                new_headers = list(current_headers) + target_headers[len(current_headers):]
+                sheet.update(range_name=f"A1:{chr(64 + len(new_headers))}1", values=[new_headers])
+                print(f"  [Sheets] Upgraded headers with {len(target_headers) - len(current_headers)} new columns.")
+        except Exception as e:
+            print(f"  [Sheets] Header verification notice: {e}")
 
     def _get_or_create_worksheet(self, spreadsheet, name, headers):
         """Return an existing worksheet or create it with header row."""
@@ -59,7 +83,7 @@ class GoogleSheetsManager:
             return set()
 
     def append_issues(self, issues):
-        """Batch-append new issues to the main sheet."""
+        """Batch-append new issues with rich metadata to the main sheet."""
         if not self.sheet or not issues:
             return
 
@@ -67,6 +91,8 @@ class GoogleSheetsManager:
         for issue in issues:
             labels = ", ".join([label["name"] for label in issue.get("labels", [])])
             repo_name = issue["repository_url"].split("repos/")[-1]
+            analysis = issue.get("_analysis", {})
+
             rows_to_append.append(
                 [
                     repo_name,
@@ -75,6 +101,11 @@ class GoogleSheetsManager:
                     labels,
                     issue["created_at"],
                     "New",
+                    issue.get("_stars", 0),
+                    issue.get("_language", "Unknown"),
+                    analysis.get("difficulty", "Good First Issue"),
+                    analysis.get("estimated_effort", "Quick Fix (<2h)"),
+                    analysis.get("summary", issue["title"]),
                 ]
             )
 
